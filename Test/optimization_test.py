@@ -2,9 +2,10 @@ import time
 
 import matplotlib.pyplot as plt
 import numpy as np
-from GaussianProcess.GP import GP, generate_grid
-from GaussianProcess.Kernel.RBF import RBF
-from Opt import BayesianOptimization
+from .GaussianProcess.GP import GP, generate_grid
+from .GaussianProcess.Kernel.RBF import RBF
+from .Opt import BayesianOptimization
+
 
 def min_2D():
     dim_test = 2
@@ -21,7 +22,7 @@ def min_2D():
     Z = f(X)[:, None]
     """gp = GP(X, Z, noise=0.01)
     gp.fit()
-    BayOpt = BayesianOptimization(X, Z, gp, f, err=1e-2)
+    BayOpt = GPGO(X, Z, gp, f, err=1e-2)
     # best=BayOpt.bayesian_run(100,  [[-1,4] for i in range(dim_test)] , iteration=30, optimization=False)
     err = BayOpt.bayesian_run_min(100,
                                    boundaries,
@@ -70,7 +71,7 @@ def min_6D():
     gp = GP(x, y, noise=0.0002, kernel=RBF(sigma_l=0.7,l=0.52))
     gp.fit()
     BayOpt = BayesianOptimization(x,y, gp, f, err=1e-4)
-    best=BayOpt.bayesian_run_BFGL(n_search_points=10,
+    best=BayOpt.bayesian_run_BFGL(n_search=10,
                                   iteration=80,
                                   boundaries=[[0,1] for i in range(6)],
                                   minimization=True)
@@ -88,7 +89,7 @@ def min_6D():
                           epsilon=0.01,
                           func=np.random.uniform)"""
     #print("BEST", err)
-    #BayesianOptimization.test_long(x=x, y=y, f=f, n_search_points=6, boundaries=[[0, 1] for i in range(6)]
+    #GPGO.test_long(x=x, y=y, f=f, n_search_points=6, boundaries=[[0, 1] for i in range(6)]
                                  #  , iter=100, minima=-3.32237, opt=False)
 
 def one_run_test():
@@ -101,13 +102,13 @@ def one_run_test():
 
 
     print(BayOpt.bayesian_run_min(200,
-                        [[-3,3]],
-                        optimization=False,
-                        minimization=True,
-                        epsilon=0.1,
-                        opt_constrain=[[2, 30], [2, 30]],
-                        n_opt_points=100,
-                        func=np.random.uniform))
+                                  [[-3,3]],
+                                  optimization=False,
+                                  minimization=True,
+                                  epsilon=0.1,
+                                  opt_constrain=[[2, 30], [2, 30]],
+                                  n_opt_points=100,
+                                  sampling=np.random.uniform))
 
 def test_minimization_1D():
     dim_test = 1
@@ -127,7 +128,7 @@ def test_minimization_1D():
                                    , iter=10, minima=-3.32237, opt=False)
     """gp = GP(X, Z, noise=0.0005)
     gp.fit()
-    BayOpt = BayesianOptimization(X, Z, gp, f)
+    BayOpt = GPGO(X, Z, gp, f)
     #gp.optimize(constrains=[[2,100],[2,100]],n_points=150)
 
     # best=BayOpt.bayesian_run(100,  [[-1,4] for i in range(dim_test)] , iteration=30, optimization=False)
@@ -160,7 +161,7 @@ def test_GP_2D(optimize=True, function=np.linspace):
           "\n Hyperparameters: ", gp.get_kernel().gethyper())
 
     if optimize:
-        gp.optimize(constrains=[[0.1,20],[0.5,30]], n_points=200, function=function)
+        gp.optimize_grid(constrains=[[0.1, 20], [0.5, 30]], n_points=200, function=function)
         #pred = gp.predict(plot)
         gp.plot(plot)
         print("New marg likelihood :", gp.get_marg(),
@@ -187,7 +188,7 @@ def test_GP_1D(optimize=False):
     gp.plot(plot[:, None])
 
 
-    gp.static_compute_marg()
+    gp.log_marginal_likelihood()
     print("Old marg likelihood :", gp.get_marg(), "\n Hyperparameters: ",
           gp.get_kernel().gethyper())
     if optimize:
@@ -200,7 +201,7 @@ def test_GP_1D(optimize=False):
         pred, var = optimized.predict(plot[:, None])
 
         optimized.plot(plot[:, None])
-        optimized.static_compute_marg()
+        optimized.log_marginal_likelihood()
         print("New marg likelihood :", optimized.get_marg(),
               "\n Hyperparameters: ", optimized.get_kernel().gethyper())
 
