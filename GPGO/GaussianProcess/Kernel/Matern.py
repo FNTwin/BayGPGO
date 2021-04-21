@@ -3,6 +3,7 @@ from numpy import sum, exp
 from numpy.linalg import norm
 from numpy import ndarray
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class Matern(Kernel):
@@ -11,24 +12,23 @@ class Matern(Kernel):
     Init method require the hyperparameters as an input (normal is sigma:2 , l:2)
     """
 
-    def __init__(self, sigma_l=2.,  noise=1e-2, gradient=False):
-        super().__init__()
-        self.hyper = {"sigma": sigma_l,  "noise": noise}
+    def __init__(self, sigma_l=2., l=2., noise=1e-3, gradient=False):
         self.subtype = "matern"
         self.eval_grad= gradient
+        super().__init__(hyper={"sigma": sigma_l, "l": l, "noise": noise})
 
     def kernel_var(self):
-        sigma,  noise = self.gethyper()
+        sigma, l, noise = self.gethyper()
         return sigma ** 2 + noise**2
 
     def product(self, x1, x2=0):
         """
         Kernel product between two parameters
         """
-        sigma, l = self.gethyper()
-        return sigma ** 2 * (1 + (5 ** .5) * abs(x1-x2) / l +
-                                 5 / 3 *
-                             abs(x1-x2) ** 2 / l ** 2) * exp(- (5 ** .5) * abs(x1-x2/ l))
+        sigma, l , _ = self.gethyper()
+        return sigma ** 2 * (1 +  abs(x1-x2) / l +
+                                 1 / 3 *
+                             (abs(x1-x2)/l) ** 2 ) * exp(- abs(x1-x2/ l))
 
     def kernel_product(self, X1, X2):
         """
@@ -38,21 +38,39 @@ class Matern(Kernel):
         :return: np.array
         """
 
-        sigma, noise= self.gethyper()
-        dist = np.sum(X1 ** 2 , axis=1)[:, None] + np.sum(X2 ** 2 , axis=1) - 2 * np.dot(X1, X2.T)
-        K = dist* np.sqrt(5) /sigma
-        return (1. + K + K**2 / 3.0) * np.exp(-K)
+        sigma, l,  noise= self.gethyper()
+        dist = np.sum(X1 ** 2, axis=1)[:, None] + np.sum(X2 ** 2 , axis=1) - 2 * np.dot(X1, X2.T)
+        return sigma**2 *(1. + np.sqrt(dist / l**2) + 1/3 * dist / l**2) * np.exp(-  np.sqrt(dist)  / l)
 
 
     @staticmethod
-    def kernel_(sigma, noise, pair_matrix):
-        K = pair_matrix * np.sqrt(5) / sigma
-        return (1. + K + K ** 2 / 3.0) * np.exp(-K) + noise**2
+    def kernel_(sigma, l, noise, pair_matrix):
+        K= sigma**2 *(1. + np.sqrt(pair_matrix / l**2) + 1/3 * pair_matrix / l**2) * np.exp(-  np.sqrt(pair_matrix)  / l)
+        K[np.diag_indices_from(K)] += noise ** 2
+        return K
 
 
-    def sethyper(self, sigma, noise):
-        self.hyper["sigma"] = sigma
-        self.hyper["noise"] = noise
+    def plot(self):
+        """
+        Plot the Kernel in 1 Dimension
+        """
+        X = np.linspace(-4, 4, 100)
+        plt.plot(X, self.product(X[:, None]))
+        plt.show()
+
+    def sethyper(self, sigma=None, l=None, noise=None):
+        """
+        Set new hyperparameters value
+        :param sigma: Variance
+        :param l: Lengthscale
+        :param noise: Noise
+        """
+        if sigma is not None:
+            self.hyper["sigma"] = sigma
+        if l is not None:
+            self.hyper["l"] = l
+        if noise is not None:
+            self.hyper["noise"] = noise
 
     '#Get methods '
 

@@ -107,7 +107,7 @@ class GP():
 
         except np.linalg.LinAlgError as exc:
 
-            logging.info(exc, "\nComputing as a normal inverse\n")
+            logging.info("\nComputing as a normal inverse\n%s",exc)
             K = np.linalg.inv(kernel)
             marg = - .5 * Y.T.dot(K.dot(Y)) \
                    - .5 * np.log(np.diag(K)).sum() \
@@ -154,7 +154,7 @@ class GP():
 
         except np.linalg.LinAlgError as exc:
             try:
-                logger.info(exc, "\nComputing as a normal inverse\n")
+                logger.info("\nComputing as a normal inverse\n %s",exc)
                 K = np.linalg.inv(kernel)
                 marg = - .5 * Y.T.dot(K.dot(Y)) \
                        - .5 * np.log(np.diag(K)).sum() \
@@ -187,7 +187,7 @@ class GP():
         :return: The value of the gradients of negative log marginal likelihood.
         """
 
-        logger.debug("GRADIENT", hyper)
+        logger.debug("GRADIENT mode\t%s", hyper)
         hyper = np.squeeze(hyper)
         m_g = lambda h: -(.5 * Y.T.dot(K.dot(h.dot(K.dot(Y)))) - .5 * np.diag(K.dot(h)).sum())
 
@@ -290,7 +290,7 @@ class GP():
         boundaries = self.get_boundary()
         eval_grad = self.get_kernel().get_eval()
 
-        logger.debug("Starting Log Marginal Likelihood Value: ", old_marg)
+        logger.debug("Starting Log Marginal Likelihood Value: %s", old_marg)
 
         X_d, Y_d = self.get_X(), self.get_Y()
         pair_matrix = np.sum(X_d ** 2, axis=1)[:, None] + np.sum(X_d ** 2, axis=1) - 2 * np.dot(X_d, X_d.T)
@@ -303,7 +303,7 @@ class GP():
         for i in np.random.uniform(boundaries[:, 0], boundaries[:, 1], size=(n_restarts, hyper_dim)):
             it += 1
 
-            logger.debug("RESTART :", it, i)
+            logger.debug("RESTART : %s , %s", it, i)
 
             res = minimize(lambda h: self.compute_log_marginal_likelihood(X=X_d,
                                                                           Y=Y_d,
@@ -334,7 +334,7 @@ class GP():
             new_marg = old_marg
             new_hyper = old_hyper
 
-        logger.info("New Log Marginal Likelihood Value: ", -new_marg, new_hyper)
+        logger.info("New Log Marginal Likelihood Value: %s", -new_marg, new_hyper)
         # Update and fit the new gp model
         self.set_hyper(*new_hyper)
         self.set_marg(-new_marg)
@@ -533,9 +533,9 @@ class GP():
         if len(array) == n:
             self.__boundary = np.asarray(array)
 
-    def set_hyper(self, sigma=None, l=None, noise=None):
+    def set_hyper(self, *hypers):
 
-        self.get_kernel().sethyper(sigma, l, noise)
+        self.get_kernel().sethyper(*hypers)
 
     def get_noise(self):
         ker = self.get_kernel()

@@ -134,7 +134,13 @@ def main():
     # X= (X - mean)/var
     # low, up =(-10-mean)/var , (140 - mean)/var
     boundaries = [[-10, 140] for i in range(dim)]
+    boundaries=[[0,1] for i in range(dim)]
+    min=-10
+    max=140
+    X=(X-min)/(max-min)
+
     gp = GP(X, Y, RBF(), normalize_y=True)
+    gp.set_boundary([[1e-4,1]])
     settings = {"type": "BFGS",
                 "ac_type": "EI",
                 "n_search": 100,
@@ -144,16 +150,17 @@ def main():
                 "minimization": True,
                 "optimization": True,
                 "n_restart": 30,
-                "sampling": np.linspace}
+                "sampling": "LHS"}
 
     BayOpt = BayesianOptimization(X, Y, settings, gp, func=None)
     proposal = BayOpt.suggest_location()
 
     # Write new file
     # proposal= proposal *var + mean
+    proposal=proposal*(max-min)+min
 
     print(proposal)
-    write_interaction(path_interaction, fill_spots(proposal))
+    #write_interaction(path_interaction, fill_spots(proposal))
 
 
 if __name__ == "__main__":

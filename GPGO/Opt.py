@@ -6,7 +6,7 @@ from scipy.optimize import minimize
 from .Acquisition import Acquistion
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+#logging.basicConfig(level=logging.INFO)
 
 
 class BayesianOptimization():
@@ -179,7 +179,7 @@ class BayesianOptimization():
 
         improvement = self._acquistion.call(search_grid, best=best)
         new_prediction = search_grid[np.argmax(improvement)]
-        print(new_prediction)
+        logger.info("Location suggested %s", new_prediction)
 
         if hasattr(self, "_plot"):
             mean, variance = self.get_GP().predict(search_grid)
@@ -216,7 +216,7 @@ class BayesianOptimization():
 
         return np.atleast_2d(min_x)
 
-    def direct(self, boundaries, max_iter=3000):
+    def direct(self, boundaries, max_iter=6000):
         try:
             from DIRECT import solve
         except ImportError as exc:
@@ -285,11 +285,11 @@ class BayesianOptimization():
                       "grid_bounds": boundaries}
 
             for i in range(1, iteration + 1):
-                logger.info("Iteration: ", i)
+                logger.info("Iteration: %s", i)
                 gp.fit()
                 if optimization:
                     gp.optimize(n_restarts=n_restart)
-                    logger.info("Optimization: ", i, " completed")
+                    logger.info("Optimization: %s completed", i)
 
                 # Compute the EI and the new theoretical best
                 # Choose type of optimizer
