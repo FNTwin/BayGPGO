@@ -101,6 +101,7 @@ def main():
 
     for g in range(GEN):
         for part in pop:
+            print(part)
             part.fitness.values = toolbox.evaluate(part)
             if not part.best or part.best.fitness < part.fitness:
                 part.best = creator.Particle(part)
@@ -111,9 +112,88 @@ def main():
         for part in pop:
             toolbox.update(part, best)
 
+
+        # Gather all the fitnesses in one list and print the stats
+        #logbook.record(gen=g, evals=len(pop), **stats.compile(pop))
+        #print(logbook.stream)
+
+
+    return pop, logbook, best
+
+
+#if __name__ == "__main__":
+    #pop,logbook,best=main()
+    #print("BEST:", best)
+    #print("Y_Best:", hartmann_6D(best))
+
+
+creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
+creator.create("Particle", numpy.ndarray, fitness=creator.FitnessMax, speed=list,
+               smin=None, smax=None, best=None)
+
+
+def generate(size, pmin, pmax, smin, smax):
+    print(pmin)
+    part = creator.Particle(numpy.random.uniform(pmin, pmax, size))
+    part.speed = numpy.random.uniform(smin, smax, size)
+    part.smin = smin
+    part.smax = smax
+    return part
+
+
+def updateParticle(part, best, phi1, phi2):
+    u1 = numpy.random.uniform(0, phi1, len(part))
+    u2 = numpy.random.uniform(0, phi2, len(part))
+    v_u1 = u1 * (part.best - part)
+    v_u2 = u2 * (best - part)
+    part.speed += v_u1 + v_u2
+    for i, speed in enumerate(part.speed):
+        if abs(speed) < part.smin:
+            part.speed[i] = math.copysign(part.smin, speed)
+        elif abs(speed) > part.smax:
+            part.speed[i] = math.copysign(part.smax, speed)
+    part += part.speed
+
+pmin=np.array([-10,0,0,0,0,0])
+pmax=np.array([100,30,1,1,1,1])
+b=np.array([[-10,2],[0,1],[0,1],[0,1],[0,1],[0,1]])
+toolbox = base.Toolbox()
+toolbox.register("particle", generate, size=6, pmin=b[:,0], pmax=b[:,1], smin=-0.3, smax=0.3)
+toolbox.register("population", tools.initRepeat, list, toolbox.particle)
+toolbox.register("update", updateParticle, phi1=2.0, phi2=2.0)
+toolbox.register("evaluate", hartmann_6D)
+
+
+def main():
+    pop = toolbox.population(n=100)
+    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats.register("avg", numpy.mean)
+    stats.register("std", numpy.std)
+    stats.register("min", numpy.min)
+    stats.register("max", numpy.max)
+
+    logbook = tools.Logbook()
+    logbook.header = ["gen", "evals"] + stats.fields
+
+    GEN = 1000
+    best = None
+
+    for g in range(GEN):
+        for part in pop:
+            print(part)
+            part.fitness.values = toolbox.evaluate(part)
+            if part.best is None or part.best.fitness < part.fitness:
+                part.best = creator.Particle(part)
+                part.best.fitness.values = part.fitness.values
+            if best is None or best.fitness < part.fitness:
+                best = creator.Particle(part)
+                best.fitness.values = part.fitness.values
+        for part in pop:
+            toolbox.update(part, best)
+
         # Gather all the fitnesses in one list and print the stats
         logbook.record(gen=g, evals=len(pop), **stats.compile(pop))
-        #print(logbook.stream)
+        print(logbook.stream)
 
     return pop, logbook, best
 
@@ -125,8 +205,10 @@ if __name__ == "__main__":
 
 
 
+
+
 #MULTI
-import array
+"""import array
 import random
 import json
 
@@ -243,4 +325,4 @@ if __name__ == "__main__":
     # Use 500 of the 1000 points in the json file
     # optimal_front = sorted(optimal_front[i] for i in range(0, len(optimal_front), 2))
 
-    pop, stats = main()
+    pop, stats = main()"""

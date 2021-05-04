@@ -211,7 +211,7 @@ def test_minimization_1D():
 
 def test_Hartmann_6D():
     dim = 6
-    points = 10
+    points = 70
     x = np.random.uniform(0, 1, (10, 6))
 
 
@@ -245,12 +245,12 @@ def test_Hartmann_6D():
     gp = GP(x, y, RBF(gradient=False))
     gp.fit()
 
-    settings = {"type": "BFGS",
+    settings = {"type": "PSO",
                 "ac_type":"EI",
-                "n_search": 5,
+                "n_search": 10,
                 "boundaries": [[0, 1] for i in range(6)],
                 "epsilon": 0.01,
-                "iteration": 2,
+                "iteration": 30,
                 "minimization": True,
                 "optimization": True,
                 "n_restart": 5,
@@ -299,6 +299,7 @@ def plot_test():
 
 a = time.time()
 #test_GP_1D(True)
+test_Hartmann_6D()
 print("Finished: ", time.time() - a)
 
 

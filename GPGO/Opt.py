@@ -1,7 +1,7 @@
 import copy
 import logging
 import numpy as np
-from .GaussianProcess import GP, generate_grid, time_log, plot_BayOpt, Observer
+from .GaussianProcess import GP, generate_grid, time_log, plot_BayOpt, Observer, PSO
 from scipy.optimize import minimize
 from .Acquisition import Acquistion
 
@@ -56,8 +56,10 @@ class BayesianOptimization():
                 "DIRECT" , The Bayesian Optimization utilizes the Dividing Rectangle Technique to maximize the
                            Acquisition Function
                 "BFGS" , The Bayesian Optimization utilizes the L-BFGS-B optimizer to maximize the Acquisition Function
-                "NAIVE" , The Bayesian Optimization utilizes some sampling techniques to calculate the Acquisition
-                          Function maxima
+                "PSO" , The Bayesian Optimization utilizes a Particle Swarm Optimization Genetive algorithm to
+                           maximize the Acquisition Function
+                "NAIVE" , The Bayesian Optimization utilizes a sampling techniques (different types of grids or LHS)
+                            to calculate the Acquisition Function maxima
             "ac_type": str
                 Set the acquisition function. Right now there are 3 types of methods:
                 "EI" , Expected Improvement
@@ -130,6 +132,7 @@ class BayesianOptimization():
                 copied_settings = copy.copy(self.settings)
                 bay_opt_methods = {"DIRECT": self.direct,
                                    "BFGS": self.bfgs,
+                                   "PSO" : self.pso,
                                    "NAIVE": self.naive}
 
                 self._optimizer = bay_opt_methods[self.get_info("type")]
@@ -186,6 +189,23 @@ class BayesianOptimization():
             args = [self.get_X(), self.get_Y(), search_grid, mean, variance, improvement, new_prediction]
             plot_BayOpt(*args)
 
+        return np.atleast_2d(new_prediction)
+
+    def pso(self, n_search, boundaries):
+        dim = self.get_dim_inputspace()
+
+        if self.get_info("minimization"):
+            best = np.min(self.get_Y())
+        else:
+            best = np.max(self.get_Y())
+
+        func = lambda X: -self._acquistion.call(np.atleast_2d(X), best=best)
+
+        swarm=PSO(dim=dim, boundary=boundaries, population=n_search, minimization=self.get_info("minimization"), func=func)
+        #dim, boundary, population = 5, gen = 1000, speed = [-1, 1], minimization = True, func = None
+        new_prediction = swarm.run()
+
+        logger.info("Location suggested %s", new_prediction)
         return np.atleast_2d(new_prediction)
 
     def bfgs(self, boundaries, n_search):
@@ -350,6 +370,8 @@ class BayesianOptimization():
             return kwargs["boundaries"], kwargs["n_search"]
         if kwargs["type"] == "DIRECT":
             return [kwargs["boundaries"]]
+        if kwargs["type"] == "PSO":
+            return kwargs["n_search"],kwargs["boundaries"]
 
     def set_func(self, func):
         self.func = func
