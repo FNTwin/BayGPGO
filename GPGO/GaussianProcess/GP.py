@@ -113,7 +113,7 @@ class GP():
                    - .5 * np.log(np.diag(K)).sum() \
                    - .5 * K.shape[0] * np.log(2 * np.pi)
 
-        self.set_marg(marg)
+        self.set_marg(marg.flatten())
 
     def compute_log_marginal_likelihood(self, X, Y, pair_matrix, hyper, verbose=False):
         """
@@ -167,9 +167,9 @@ class GP():
 
         if self.get_kernel().get_eval():
             marg_grad = self.compute_log_marginal_likelihood_gradient(X, Y, pair_matrix, hyper, verbose=False)
-            return -marg, marg_grad
+            return -marg.flatten(), marg_grad.flatten()
         else:
-            return -marg
+            return -np.array(marg).flatten()
 
     def compute_log_marginal_likelihood_gradient(self, X, Y, pair_matrix, hyper, verbose=False):
         """
@@ -288,6 +288,7 @@ class GP():
         hyper_dim = len(old_hyper)
 
         boundaries = self.get_boundary()
+        #print(boundaries)
         eval_grad = self.get_kernel().get_eval()
 
         logger.debug("Starting Log Marginal Likelihood Value: %s", old_marg)
@@ -506,10 +507,10 @@ class GP():
         in the kernel.
         """
         try:
-            return self.__boundary
+            return self._boundary
         except AttributeError:
-            self.__boundary = np.asarray([[1e-4, 10] for i in range(len(self.get_kernel().gethyper()))])
-            return self.__boundary
+            self._boundary = np.asarray([[1e-4, 10] for i in range(len(self.get_kernel().gethyper()))])
+            return self._boundary
 
     def set_boundary(self, array):
         """
@@ -528,10 +529,10 @@ class GP():
         """
         n = len(self.get_kernel().gethyper())
 
-        if len(array) == 1:
-            self.__boundary = np.asarray([array[0] for i in range(n)])
+        if len(array) == 2:
+            self._boundary = np.asarray([array for i in range(n)])
         if len(array) == n:
-            self.__boundary = np.asarray(array)
+            self._boundary = np.asarray(array)
 
     def set_hyper(self, *hypers):
 

@@ -15,9 +15,9 @@ class Acquistion():
 
     def call(self, point, best):
         if self.minimization:
-            return self.ac_function.func_min(point, best)
+            return self.ac_function.func_min(point, best).flatten()
         else:
-            return self.ac_function.func_max(point, best)
+            return self.ac_function.func_max(point, best).flatten()
 
 
 class Expected_Improvement():

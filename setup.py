@@ -25,7 +25,7 @@ setup(
         'numpy',
         'scipy',
         'matplotlib',
-        'scikit-learn'
+        'scikit-learn', 'deap'
     ],
     extras_require=extras,
     classifiers=[

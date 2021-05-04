@@ -417,3 +417,7 @@ class BayesianOptimization():
             datanew += f'{count}\t{X[i]}\t{Y[i]}\n'
 
         return header + old_data + time + datanew + header + str(self.get_GP())
+
+
+class MultiObjectiveBO(BayesianOptimization):
+    pass
