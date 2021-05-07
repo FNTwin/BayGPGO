@@ -250,7 +250,7 @@ def test_Hartmann_6D():
                 "n_search": 10,
                 "boundaries": [[0, 1] for i in range(6)],
                 "epsilon": 0.01,
-                "iteration": 30,
+                "iteration": 2,
                 "minimization": True,
                 "optimization": True,
                 "n_restart": 5,
@@ -299,7 +299,96 @@ def plot_test():
 
 a = time.time()
 #test_GP_1D(True)
-test_Hartmann_6D()
+#test_Hartmann_6D()
 print("Finished: ", time.time() - a)
+
+from GPGO.GaussianProcess import NSGAII
+from deap import benchmarks
+
+def f(x):
+    x=x[0]
+    """def f1(x):
+        if x<=1:
+            return -x
+        if 1<x<=3:
+            return x-2
+        if 3<x<=4:
+            return 4-x
+        if x>4:
+            return x-4
+    def f2(x):
+        return (x-5)**2 -10"""
+
+    """def f1(x):
+        if x <= 1:
+            return np.sin(-x)
+        if 1 < x <= 3:
+            return np.sin(x - 2)
+        if 3 < x <= 4:
+            return np.sin(4 - x)
+        if x > 4:
+            return x - 4
+
+    def f2(x):
+        return np.sin(x - 5) ** 2"""
+    def f1(X):
+        return (X + 0.5) ** 2 / 2 - np.cos(5 * (X + 0.5)) + 1.2
+    def f2(X):
+        return (X - 0.5) ** 2 / 2 - np.cos(5 * (X - 0.5)) + 1.2
+
+    return f1(x), f2(x)
+
+def f(x):
+    def f1(x):
+        x1, x2 = x
+        if (x1+x2) <=0:
+            return np.cos((x1 - 0.1) * (x1 - 0.9))
+
+        if 0<(x1+x2)<=0.2:
+            return np.sin((x1 - 0.1) * (x1 - 0.9)+(x1 - 0.4) * (x1 - 0.6))
+        else:
+            return np.sin(x1 ** 2 + x2 ** 2)
+    def f2(x):
+        x1, x2 = x
+        if (x1 + x2) <= 0:
+            return np.cos((x1 - 1) ** 2 + x2 ** 2)
+        else:
+            return np.sin(- (x1 - 0.4) * (x1 - 0.6))
+
+    return f1(x), f2(x)
+
+a=NSGAII(2, 2, np.array([[-1.5,1.5] for i in range(2)]), func=f)
+a.run()
+par=a.pareto_sorted()
+
+plt.plot(par[:,0], par[:,1], color="red")
+plt.scatter(a.NSGAII["pareto"][:,0],a.NSGAII["pareto"][:,1], marker="x", color="black")
+plt.show()
+
+
+"""x=np.linspace(-5,10,100)
+
+
+def f1(x):
+    if x <= 1:
+        return np.sin(-x)
+    if 1 < x <= 3:
+        return np.sin(x - 2)
+    if 3 < x <= 4:
+        return np.sin(4 - x)
+    if x > 4:
+        return x - 4
+
+def f2(x):
+    return np.sin(x - 5) ** 2
+
+y1,y2=[],[]
+
+for i in x:
+    y1.append(f1(i))
+    y2.append(f2(i))
+plt.plot(x,y1)
+plt.plot(x,y2)
+plt.show()"""
 
 
