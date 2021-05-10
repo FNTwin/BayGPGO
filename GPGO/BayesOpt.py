@@ -1,9 +1,12 @@
 import copy
 import logging
 import numpy as np
-from .GaussianProcess import GP, generate_grid, time_log, plot_BayOpt, Observer, PSO
+from .GaussianProcess import GP, generate_grid, time_log, plot_BayOpt, Observer, PSO, NSGAII
+from .GaussianProcess.Kernel import RBF
 from scipy.optimize import minimize
 from .Acquisition import Acquistion
+
+
 
 logger = logging.getLogger(__name__)
 #logging.basicConfig(level=logging.INFO)
@@ -442,4 +445,135 @@ class BayesianOptimization():
 
 
 class MultiObjectiveBO(BayesianOptimization):
-    pass
+
+    def __init__(self, X: np.ndarray, Y: np.ndarray, nobj : int, settings=None, func=None, err=1e-4):
+        self.dim_input = X[0].shape[0]
+        self.dim_output = nobj
+        self.dimension = X.shape[0]
+        self.X_train = X
+        self.Y_train = Y
+        self.settings = settings
+        self.func = func
+        self._err = err
+        self._it = None
+        self._time_logger = time_log()
+        self._helper = Observer("Multi Objective Bayesian Optimization",self.get_info("minimization"))
+        self._old_dataset = [X, Y]
+
+    @property
+    def Objective(self):
+        self.Objective_y=[]
+        for i in range(self.dim_output):
+            self.Objective_y.append(self.Y_train[:,i:i+1])
+        return self.Objective_y
+
+    @property
+    def ListGP(self):
+        objective = self.Objective
+        self._ListGP=[GP(self.get_X(), objective[i], RBF(), normalize_y=True) for i in range(self.dim_output)]
+        return self._ListGP
+
+    @ListGP.setter
+    def ListGP(self, objective):
+        self._ListGP = objective
+
+    def ObjectiveGP(self,X):
+        X = np.atleast_2d(np.asarray(list(X)))
+        return list(map(lambda x, gp: gp.predict(x)[0].flatten()[0], [X]*self.dim_output, self._ListGP))
+
+    def ObjectiveAC(self,X):
+        X=np.asarray(list(X))
+        return list(map(lambda x, ac, y: ac.call(x, best=y)[0], [X]*self.dim_output, self._acquistion, self.best))
+
+    def inizializeAC(self):
+        self._acquistion = []
+        best = []
+        for i in range(self.dim_output):
+            self._acquistion.append(Acquistion(type=self.get_info("ac_type"),
+                                               gp=self._ListGP[i],
+                                               epsilon=self.get_info("epsilon"),
+                                               minimization=self.get_info("minimization")))
+            if self.get_info("minimization"):
+                best.append(np.min(self.Objective_y[i]))
+            else:
+                best.append(np.max(self.Objective_y[i]))
+        self.best=best
+
+
+    def fit(self):
+        objective=self.ListGP
+        for gp in objective:
+            gp.optimize()
+            gp.fit()
+
+    def augment_XY(self, new_data_X, new_data_Y):
+        self.augment_X(new_data_X)
+        self.augment_Y(new_data_Y)
+
+    def hypervolume(self, pareto, ref_point):
+        hv = get_performance_indicator('hv', ref_point=ref_point)
+        return hv.calc(pareto)
+
+    def LargestOfLeast(self, pareto, F):
+        NF = len(pareto)
+        MinDist = np.empty(NF)
+        for i in range(NF):
+            MinDist[i] = self.MinDistance(-pareto[i], F)
+        ArgMax = np.argmax(MinDist)
+        Mean = MinDist.mean()
+        Std = np.std(MinDist)
+        return ArgMax, (MinDist - Mean) / (Std)
+
+    @staticmethod
+    def MinDistance(X, Y):
+        N = len(X)
+        Npts = len(Y)
+        DistMin = float('inf')
+        for i in range(Npts):
+            Dist = 0.
+            for j in range(N):
+                Dist += (X[j]-Y[i, j])**2
+            Dist = np.sqrt(Dist)
+            if Dist < DistMin:
+                DistMin = Dist
+        return DistMin
+
+    def bayesian_run(self):
+        if GP is None:
+            raise ValueError("Gaussian Process not existing. Define one before running a " +
+                             "Bayesian Optimization")
+        else:
+            dim = self.get_dim_inputspace()
+            #tm = self.get_time_logger()
+            #boundaries_array = np.asarray(boundaries)
+            #self._acquistion = Acquistion(ac_type, gp, epsilon, minimization)
+            #kwargs = {"type": self.get_info("type"),
+            #          "n_search": n_search,
+            #          "boundaries": boundaries_array,
+            #          "sampling": sampling,
+            #          "grid_bounds": boundaries}
+
+            self._optimizer= NSGAII(dim, self.dim_output, self.settings["boundaries"])
+
+            for i in range(1, self.get_info("iteration") + 1):
+                print("ITERATION:", i)
+
+                logger.info("Iteration: %s", i)
+                self.fit()
+                logger.info("Optimization: %s completed", i)
+                self.inizializeAC()
+                self._optimizer.set_func(self.ObjectiveGP)
+                self._optimizer.run()
+                pop = self._optimizer.NSGAII["npop"]
+                #We have the pareto front of iteration ,
+                #TODO: update dataset and problem, choose point
+                #https://www.sciencedirect.com/science/article/pii/S2352711020300911 (MOBOpt)
+                #https://github.com/yunshengtian/DGEMO This seems better
+
+
+
+
+
+
+
+

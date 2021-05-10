@@ -339,7 +339,7 @@ def f(x):
     return f1(x), f2(x)
 
 def f(x):
-    def f1(x):
+    """def f1(x):
         x1, x2 = x
         if (x1+x2) <=0:
             return np.cos((x1 - 0.1) * (x1 - 0.9))
@@ -351,13 +351,20 @@ def f(x):
     def f2(x):
         x1, x2 = x
         if (x1 + x2) <= 0:
-            return np.cos((x1 - 1) ** 2 + x2 ** 2)
+            return np.cos((x1 - 1) ** 2 + x2 ** 2)**2
         else:
-            return np.sin(- (x1 - 0.4) * (x1 - 0.6))
+            return np.sin(- (x1 - 0.4) * (x1 - 0.6))**3
+
+    print(f1(x))"""
+    x=x[0]
+    def f1(x):
+        return np.sin(x)**3 - .4
+    def f2(x):
+        return np.sin(- (x - 0.4) * (x - 0.6))**3
 
     return f1(x), f2(x)
 
-a=NSGAII(2, 2, np.array([[-1.5,1.5] for i in range(2)]), func=f)
+a=NSGAII(1, 2, np.array([[-3,3]]), func=f)
 a.run()
 par=a.pareto_sorted()
 

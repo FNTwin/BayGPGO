@@ -97,7 +97,7 @@ class PSO():
                 toolbox.update(part, best)
 
             # Gather all the fitnesses in one list and print the stats
-            logbook.record(gen=g, evals=len(pop), **stats.compile(pop))
+            #logbook.record(gen=g, evals=len(pop), **stats.compile(pop))
             # print(logbook.stream)
 
         self.PSO = {
@@ -134,6 +134,9 @@ class NSGAII():
 
     def uniform(self, b):
         return np.random.uniform(b[:, 0], b[:, 1], self.DIM)
+
+    def set_func(self, func):
+        self.func=func
 
     def run(self):
         n = self.GEN
