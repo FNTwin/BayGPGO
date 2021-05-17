@@ -483,7 +483,8 @@ class MultiObjectiveBO(BayesianOptimization):
 
     def ObjectiveAC(self,X):
         X=np.asarray(list(X))
-        return list(map(lambda x, ac, y: ac.call(x, best=y)[0], [X]*self.dim_output, self._acquistion, self.best))
+        #print(list(map(lambda x, ac, y: -ac.call(x, best=y)[0], [X]*self.dim_output, self._acquistion, self.best)))
+        return list(map(lambda x, ac, y: -ac.call(x, best=y)[0], [X]*self.dim_output, self._acquistion, self.best))
 
     def inizializeAC(self):
         self._acquistion = []
@@ -504,7 +505,7 @@ class MultiObjectiveBO(BayesianOptimization):
         objective=self.ListGP
         for gp in objective:
             gp.optimize()
-            gp.fit()
+            #gp.fit()
 
     def augment_XY(self, new_data_X, new_data_Y):
         self.augment_X(new_data_X)
@@ -552,6 +553,7 @@ class MultiObjectiveBO(BayesianOptimization):
             #          "boundaries": boundaries_array,
             #          "sampling": sampling,
             #          "grid_bounds": boundaries}
+            self._obj_to_opt=self.get_info("func")
 
             self._optimizer= NSGAII(dim, self.dim_output, self.settings["boundaries"])
 
@@ -562,13 +564,39 @@ class MultiObjectiveBO(BayesianOptimization):
                 self.fit()
                 logger.info("Optimization: %s completed", i)
                 self.inizializeAC()
-                self._optimizer.set_func(self.ObjectiveGP)
+                self._optimizer.set_func(self.ObjectiveAC if self._obj_to_opt == "ac" else self.ObjectiveGP)
                 self._optimizer.run()
                 pop = self._optimizer.NSGAII["npop"]
                 #We have the pareto front of iteration ,
                 #TODO: update dataset and problem, choose point
                 #https://www.sciencedirect.com/science/article/pii/S2352711020300911 (MOBOpt)
                 #https://github.com/yunshengtian/DGEMO This seems better
+                batch=self.get_info("batch")
+                print(self.get_X().shape)
+                import random
+                x_tmp=[]
+                y_tmp = []
+                for _ in range(batch):
+                    x=random.choice(pop)
+                    x_tmp.append(x)
+                    y_tmp.append(self.func(x))
+                x_tmp=np.array(x_tmp)
+                y_tmp=np.array(y_tmp)
+                #print(x_tmp,y_tmp)
+                #print("BEFORE",self.Y_train)
+                self.augment_XY(x_tmp,y_tmp)
+                #print("AFTER",self.Y_train)
+
+
+            logger.info("Iteration: %s", i)
+            self.fit()
+            logger.info("Optimization: %s completed", i)
+            self.inizializeAC()
+            self._optimizer.set_func(self.ObjectiveGP)
+            self._optimizer.run()
+            pop = self._optimizer.NSGAII["npop"]
+            return self._optimizer
+
 
 
 
