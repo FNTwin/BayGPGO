@@ -576,6 +576,7 @@ class MultiObjectiveBO(BayesianOptimization):
                 import random
                 x_tmp=[]
                 y_tmp = []
+                #TODO: func must be also analytical
                 for _ in range(batch):
                     x=random.choice(pop)
                     x_tmp.append(x)
@@ -584,7 +585,10 @@ class MultiObjectiveBO(BayesianOptimization):
                 y_tmp=np.array(y_tmp)
                 #print(x_tmp,y_tmp)
                 #print("BEFORE",self.Y_train)
-                self.augment_XY(x_tmp,y_tmp)
+                if hasattr(self, "_no_evaluation"):
+                    return x_tmp
+                else:
+                    self.augment_XY(x_tmp,y_tmp)
                 #print("AFTER",self.Y_train)
 
 
@@ -596,6 +600,11 @@ class MultiObjectiveBO(BayesianOptimization):
             self._optimizer.run()
             pop = self._optimizer.NSGAII["npop"]
             return self._optimizer
+
+    def suggest_location(self):
+        self._no_evaluation=True
+        return self.bayesian_run()
+
 
 
 
