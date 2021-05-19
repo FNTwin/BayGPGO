@@ -539,6 +539,12 @@ class MultiObjectiveBO(BayesianOptimization):
                 DistMin = Dist
         return DistMin
 
+    def valuate(self,X):
+        if self.true_problem is not None:
+            return self.true_problem(X)
+        else:
+            return self.func(X)
+
     def bayesian_run(self):
         if GP is None:
             raise ValueError("Gaussian Process not existing. Define one before running a " +
@@ -553,6 +559,7 @@ class MultiObjectiveBO(BayesianOptimization):
             #          "boundaries": boundaries_array,
             #          "sampling": sampling,
             #          "grid_bounds": boundaries}
+            self.true_problem=self.func
             self._obj_to_opt=self.get_info("func")
 
             self._optimizer= NSGAII(dim, self.dim_output, self.settings["boundaries"])
@@ -576,13 +583,19 @@ class MultiObjectiveBO(BayesianOptimization):
                 import random
                 x_tmp=[]
                 y_tmp = []
-                #TODO: func must be also analytical
+                #TODO: func must be also analytical and clean this mess
                 for _ in range(batch):
                     x=random.choice(pop)
                     x_tmp.append(x)
-                    y_tmp.append(self.func(x))
+                    if hasattr(self, "_no_evaluation"):
+                        pass
+                    else:
+                        y_tmp.append(self.valuate(x))
                 x_tmp=np.array(x_tmp)
-                y_tmp=np.array(y_tmp)
+                if hasattr(self, "_no_evaluation"):
+                    pass
+                else:
+                    y_tmp=np.array(y_tmp)
                 #print(x_tmp,y_tmp)
                 #print("BEFORE",self.Y_train)
                 if hasattr(self, "_no_evaluation"):
