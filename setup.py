@@ -6,16 +6,16 @@ with open("README.md", "r") as file:
 extras = {
    'DIRECT': ['DIRECT'],
     'smt' : ['smt'],
-    'all' : ['DIRECT','smt']
+    'all' : ['DIRECT','smt','deap']
 }
 
 setup(
-    name='GPGO',
-    version='0.1.2',
+    name='BayGPGO',
+    version='0.1.3',
     author='Cristian Gabellini',
     packages=find_packages(),
     url='https://github.com/FNTwin/GPGO',
-    download_url = 'https://github.com/FNTwin/GPGO/archive/0.1.2.tar.gz' ,
+    download_url = 'https://github.com/FNTwin/GPGO/archive/0.1.2.tar.gz',
     license='MIT',
     description='Bayesian Optimization with Gaussian Process as surrogate model',
     long_description=read_me_description,
@@ -25,7 +25,8 @@ setup(
         'numpy',
         'scipy',
         'matplotlib',
-        'scikit-learn', 'deap'
+        'scikit-learn',
+        'deap'
     ],
     extras_require=extras,
     classifiers=[

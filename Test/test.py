@@ -245,12 +245,12 @@ def test_Hartmann_6D():
     gp = GP(x, y, RBF(gradient=False))
     gp.fit()
 
-    settings = {"type": "PSO",
+    settings = {"type": "BFGS",
                 "ac_type":"EI",
                 "n_search": 10,
                 "boundaries": [[0, 1] for i in range(6)],
                 "epsilon": 0.01,
-                "iteration": 2,
+                "iteration": 5,
                 "minimization": True,
                 "optimization": True,
                 "n_restart": 5,
@@ -365,6 +365,7 @@ def f(x):
     return f1(x), f2(x)
 
 a=NSGAII(1, 2, np.array([[-3,3]]), func=f)
+#test_Hartmann_6D()
 a.run()
 par=a.pareto_sorted()
 
