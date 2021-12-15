@@ -1,7 +1,8 @@
-# GPGO - Gaussian Process GO
-My own implementation of a Bayesian Black box Optimization with Gaussian Process as a surrogate model.
+# BayGPGO - Bayesian multi-objective Gaussian Process GO
+A custom (and from scratch) implementation of a Black box multi-objective Optimization with Gaussian Process as a surrogate model.
 It is still in development but it was successfully used to achieve a bottom up optimization of the Dissipative
-Particle Dynamics force field for a complex system of polymers chains functionalized gold nanoparticles in a water solvent. 
+Particle Dynamics force field for a complex system of polymers chains functionalized gold nanoparticles in a water solvent and a PEG Brownian dynamics model by
+doing both single and multi objective routine. 
 
 # Hyperparameters
 The Hyperparameters of the GP are optimized by the common technique of maximizing the Log Marginal Likelihood. In this repository this is achieved by using a search grid (although not in an efficient way) or by using the scipy optimizer module (L-BFGS-B, TNC, SLSCP).
@@ -33,20 +34,13 @@ In this little package right now there are 3 ways to run an optimization task wi
 Easy to use it with a shell procedure!
 Load the data and just .suggest_location() to get the next points of your experiment! 
 
-# Multi Objective
-Right now the package contains an implementation of the NSGAII genetic solver that allows to solve multi objective 
-problems. It has also an early version of a Multi Objective Bayesian optimization that uses the NSGAII and optimize 
-the Acquisition function EI or the mean function of the GP. It will follow a more precise implementation of the
-Hypervolume improvement.
+# Multi-objective
+The package contains an implementation of the NSGAII genetic solver that allows to solve multi objective 
+problems. It has also an early version of a Multi-objective Bayesian optimization that uses the NSGAII and optimize 
+the Acquisition function EI (or whatever acquisition function you choose) or the mean function of the GP. 
+It will follow a more precise implementation of the maximization of Hypervolume improvement for batch processing.
 
 <a href="https://ibb.co/MhC92Yc"><img src="https://i.ibb.co/7z1bYwn/pareto.png" alt="pareto" border="0"></a>
-
-# TODO
--Load data routines
-
--Good code practice maybe 
-
--Easy routines for LAMMPS (at least DPD and BD)
 
 
 
